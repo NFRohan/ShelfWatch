@@ -35,19 +35,52 @@
 The architecture follows a microserviced approach within an **AWS EKS** cluster. External traffic is routed through AWS Load Balancers to isolated inference and observability endpoints.
 
 ```mermaid
-graph TD
-    Client[User / App] -->|HTTPS| LB1[API Load Balancer]
-    LB1 --> API[Inference Service]
-    API -->|Metrics| Prom[Prometheus]
-    Prom --> Grafana[Grafana]
-    Grafana -->|HTTPS| LB2[Analytics Load Balancer]
-    Client -->|Dashboard| LB2
+flowchart TB
+    Client([Store Manager / Client API])
 
-    subgraph "EKS Cluster"
-        API
-        Prom
-        Grafana
+    subgraph CICD[CI/CD Pipeline]
+        GH[GitHub Repository] -->|Push to main| Actions[GitHub Actions]
     end
+
+    subgraph AWS[AWS Cloud Environment]
+        direction TB
+        
+        ECR[(Amazon ECR<br/>Image Registry)]
+        ALB[AWS Load Balancer]
+
+        subgraph EKS[Amazon EKS Cluster: shelfwatch]
+            direction TB
+            HPA[[K8s Horizontal Pod Autoscaler<br/>Target: 70% CPU, Min: 1, Max: 3]]
+
+            subgraph Nodes[Spot Node Group<br/>m7i-flex.large / t3.small]
+                subgraph Pod[Inference Pod<br/>CPU Request: 200m]
+                    API[FastAPI Service<br/>Endpoints: /predict, /health, /metrics]
+                    ThreadPool[Thread Pool Executor]
+                    ONNX[ONNX Runtime<br/>INT8 Quantized Weights]
+
+                    API -->|Offload image processing| ThreadPool
+                    ThreadPool -->|Execute CPU Inference| ONNX
+                end
+            end
+
+            subgraph Observability[Observability Stack]
+                Prometheus[(Prometheus)]
+                Grafana[Grafana Dashboards]
+
+                Prometheus -.->|Scrapes every 15s| API
+                Grafana -.->|Queries PromQL| Prometheus
+            end
+
+            HPA -.->|Scales Pods| Pod
+            ALB ===>|Routes HTTP Traffic| API
+        end
+
+        Actions -->|1. docker build & push| ECR
+        Actions -->|2. kubectl set image deployment| EKS
+        ECR -.->|Pulls latest image| Pod
+    end
+
+    Client ===>|POST /predict| ALB
 ```
 
 ### Components
@@ -93,7 +126,7 @@ Run the complete stack using Docker Compose:
 ```bash
 docker compose up --build
 ```
-The **Interactive UI** is served at `http://localhost:8000`.
+The **Live Interactive UI** is served at [http://a86b4f4c852b64526ae8c22a8b715100-2106448101.us-east-1.elb.amazonaws.com/](http://a86b4f4c852b64526ae8c22a8b715100-2106448101.us-east-1.elb.amazonaws.com/).
 
 ### AWS Deployment & CI/CD
 
