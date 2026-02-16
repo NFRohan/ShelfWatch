@@ -12,7 +12,7 @@
 **An automated retail shelf analysis pipeline.**
 *Detects products. Counts stock. Scales automatically.*
 
-[**View Live Demo**](http://a86b4f4c852b64526ae8c22a8b715100-2106448101.us-east-1.elb.amazonaws.com) • [**Architecture Docs**](docs/architecture.md)
+[**Live Demo UI**](http://a86b4f4c852b64526ae8c22a8b715100-2106448101.us-east-1.elb.amazonaws.com) • [**Grafana Dashboard**](http://aa7f24b6fcb1840baa60271925a86de9-1362079785.us-east-1.elb.amazonaws.com) • [**Architecture Docs**](docs/architecture.md)
 
 </div>
 
@@ -20,25 +20,29 @@
 
 ## 🚀 Overview
 
-**ShelfWatch** is a production-grade MLOps project designed to solve the problem of manual stock auditing in supermarkets. It deploys a fine-tuned **YOLOv8** object detection model as a scalable microservice.
+**ShelfWatch** is a production-grade MLOps project designed to solve the problem of manual stock auditing in supermarkets. It deploys a fine-tuned **YOLOv8** object detection model as a scalable microservice on AWS EKS.
 
-Unlike typical notebook-only ML projects, ShelfWatch features a complete **DevOps/MLOps** lifecycle:
-*   **Infrastructure as Code** (eksctl / CloudFormation)
-*   **CI/CD Pipeline** (GitHub Actions)
-*   **Observability** (Prometheus + Grafana)
-*   **Cost Optimization** (ONNX + INT8 Quantization on CPU)
+![ShelfWatch Demo UI](./images/UI.png)
+
+Unlike typical notebook-ML projects, ShelfWatch features a complete **production lifecycle**:
+*   **Infrastructure as Code**: Automated provisioning via `eksctl` and `kubectl`.
+*   **Performance Optimization**: 74% model size reduction and <500ms latency via INT8 quantization.
+*   **Full Observability**: Live Prometheus metrics visualized in a professional Grafana dashboard.
+*   **Auto-Scaling**: Horizontal Pod Autoscaler (HPA) that scales pods based on real-time traffic.
 
 ## 🏗️ Architecture
 
-The system uses a **microservices architecture** deployed on **AWS EKS**.
+The system uses a **microservices architecture** deployed on **AWS EKS**, leveraging a managed Load Balancer (ELB) to handle incoming traffic and a sidecar-style observability stack.
 
 ```mermaid
-graph LR
-    User[Store Manager] -->|Upload Image| LB[Load Balancer]
-    LB --> API[FastAPI Service]
-    API -->|Inference| ONNX[ONNX Runtime (CPU)]
-    API -->|Metrics| Prom[Prometheus]
-    Prom -->|Viz| Grafana[Grafana Dashboard]
+graph TD
+    User[Store Manager] -->|Upload Image| LB1[API Load Balancer]
+    LB1 --> API[FastAPI Inference Service]
+    API -->|Predict| ONNX[ONNX Runtime (CPU INT8)]
+    
+    API -->|Expose /metrics| Prom[Prometheus]
+    Prom -->|Query| Grafana[Grafana Dashboard]
+    Grafana -->|Public Exposure| LB2[Grafana Load Balancer]
     
     subgraph "AWS EKS Cluster"
         API
@@ -46,68 +50,57 @@ graph LR
         Prom
         Grafana
     end
+    
+    User -->|View Analytics| LB2
 ```
-
-> **See full design details in [docs/architecture.md](docs/architecture.md)** (C4 Model)
 
 ## ✨ Key Features
 
-- **⚡ High-Performance Inference**: <500ms latency on CPU using ONNX Runtime with INT8 quantization.
-- **☁️ Cloud-Native**: Containerized with Docker and orchestrated on Kubernetes (EKS).
-- **📈 Auto-Scaling**: Horizontal Pod Autoscaler (HPA) reacts to CPU load to handle traffic spikes.
-- **👀 Observability**: Real-time metrics for request latency, error rates, and inference throughput.
-- **🛡️ Robust API**: FastAPI with Pydantic validation, structured logging, and health checks.
+- **⚡ High-Performance Inference**: Sub-500ms latency on CPU by converting YOLOv8 to **ONNX INT8**.
+- **📈 Cloud-Native Observability**: Custom dashboard tracking tail latency (p99), CPU/RAM, and model drift.
+- **🎨 Interactive UI**: Single-page web app with real-time Canvas visualization of detections.
+- **☁️ Production-Ready IaC**: Complete `deploy.ps1` and `teardown.ps1` scripts for automated lifecycle management.
+- **🛡️ Scalable Infrastructure**: Kubernetes-native scaling using HPA and readiness/liveness probes.
+
+## 📊 Observability
+
+ShelfWatch doesn't just predict; it monitors. The built-in Grafana dashboard provides real-time insights:
+
+![ShelfWatch Analytics](./images/analytics.png)
 
 ## 🛠️ Tech Stack
 
 | Component | Technology |
 |---|---|
 | **Model** | YOLOv8 (Ultralytics) |
-| **Optimization** | ONNX Runtime (INT8) |
-| **API Framework** | FastAPI (Python 3.10) |
-| **Data** | SKU-110K Dataset (via Roboflow) |
-| **Containerization** | Docker (Multi-stage build) |
-| **Orchestration** | AWS EKS (Kubernetes 1.31) |
-| **Infrastructure** | eksctl, Bash/PowerShell |
+| **Optimization** | ONNX Runtime (INT8 Dynamic Quantization) |
+| **API Framework** | FastAPI (Python) |
+| **Frontend** | Vanilla JS / HTML5 / Canvas |
+| **Infrastructure** | AWS EKS, Load Balancer, ECR |
 | **Monitoring** | Prometheus, Grafana |
 
 ## ⚡ Quick Start
 
-### 1. Local Development
+### 1. Local Development (Docker)
+
+Run the entire stack locally with a single command:
 
 ```bash
-# Clone
-git clone https://github.com/<your-username>/ShelfWatch.git
-cd ShelfWatch
-
-# Install dependencies
-python -m venv .venv && .venv\Scripts\activate
-pip install -r requirements.txt
-
-# Run Inference Server
-uvicorn inference.app:app --host 0.0.0.0 --port 8000
+docker compose up --build
 ```
+Access the **Demo UI** at `http://localhost:8000` and **Grafana** at `http://localhost:3000`.
 
 ### 2. AWS Production Deployment
 
-Deploy the entire stack to AWS in one command:
+Deploy to AWS EKS (m7i-flex clusters):
 
 ```powershell
 .\infra\aws\deploy.ps1
 ```
 
-This script:
-1.  Creates an ECR repository.
-2.  Builds the Docker image with "baked-in" optimized weights.
-3.  Provisions an EKS cluster (`m7i-flex.large` nodes).
-4.  Deploys the Kubernetes manifests (Service, Deployment, HPA).
-
-### 3. Run Demo
-
-Verify the deployment with our demo script:
+### 3. Run Demo Script
 
 ```powershell
-# Target your AWS Load Balancer
 $env:API_URL="http://<YOUR-LB-URL>"
 python scripts/demo_predict.py scripts/shelf.jpg
 ```
@@ -116,15 +109,16 @@ python scripts/demo_predict.py scripts/shelf.jpg
 
 ```
 ShelfWatch/
-├── dataset/            # Dataset configs & download scripts
-├── docs/               # Architecture diagrams & documentation
-├── inference/          # FastAPI application code
-├── infra/              # IaC (AWS) & Kubernetes manifests
-├── scripts/            # Utility scripts (demo, quantize, export)
-├── tests/              # Pytest suite
-└── training/           # YOLOv8 training logic
+├── docs/               # Architecture diagrams (C4 Model)
+├── images/             # Documentation screenshots
+├── inference/          # FastAPI App & Model Logic
+├── infra/              # Kubernetes & AWS IaC
+├── scripts/            # Quantization & Model Export
+├── tests/              # API Unit Tests
+└── ui/                 # Frontend Static Assets
 ```
 
 ## 📜 License
 
 MIT License.
+
