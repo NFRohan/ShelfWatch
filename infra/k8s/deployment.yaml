@@ -89,7 +89,7 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: shelfwatch-inference
-  minReplicas: 1
+  minReplicas: 2
   maxReplicas: 3
   metrics:
     - type: Resource

@@ -28,7 +28,8 @@
 *   **Latency-Optimized Inference**: INT8 quantization provides sub-500ms response times on CPU.
 *   **Integrated Monitoring**: Performance telemetry aggregated via Prometheus and Grafana.
 *   **Continuous Integration**: Automated linting and testing via GitHub Actions.
-*   **Dynamic Scaling**: Resource allocation managed by Kubernetes Horizontal Pod Autoscaler. (HPA) integration based on resource utilization.
+*   **Dynamic Scaling**: Resource allocation managed by Kubernetes Horizontal Pod Autoscaler (HPA).
+*   **Spot Resilience**: Built-in 2-minute interruption handling with Pod Disruption Budgets (PDB) and multi-node redundancy for zero-downtime operation on AWS Spot instances.
 
 ## 🏗️ System Architecture
 
