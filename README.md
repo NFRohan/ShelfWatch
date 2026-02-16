@@ -52,7 +52,7 @@ graph LR
 
 ## ✨ Key Features
 
-- **⚡ High-Performance Inference**: <300ms latency on CPU using ONNX Runtime with INT8 quantization.
+- **⚡ High-Performance Inference**: <500ms latency on CPU using ONNX Runtime with INT8 quantization.
 - **☁️ Cloud-Native**: Containerized with Docker and orchestrated on Kubernetes (EKS).
 - **📈 Auto-Scaling**: Horizontal Pod Autoscaler (HPA) reacts to CPU load to handle traffic spikes.
 - **👀 Observability**: Real-time metrics for request latency, error rates, and inference throughput.

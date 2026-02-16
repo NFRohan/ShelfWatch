@@ -95,6 +95,9 @@ Write-Host "   kubectl configured for cluster: $CLUSTER_NAME"
 Write-Host "`nStep 5/6: Deploying to Kubernetes..." -ForegroundColor Yellow
 
 kubectl apply -f "$PROJECT_ROOT\infra\k8s\configmap.yaml"
+kubectl create configmap grafana-dashboards-json --from-file="$PROJECT_ROOT\infra\grafana\provisioning\dashboards\shelfwatch.json" --dry-run=client -o yaml | kubectl apply -f -
+kubectl apply -f "$PROJECT_ROOT\infra\k8s\prometheus.yaml"
+kubectl apply -f "$PROJECT_ROOT\infra\k8s\grafana.yaml"
 
 # Substitute ECR image into deployment and apply
 $deploymentContent = Get-Content "$PROJECT_ROOT\infra\k8s\deployment.yaml" -Raw
@@ -112,7 +115,16 @@ $LB_URL = ""
 for ($i = 1; $i -le 30; $i++) {
     $LB_URL = kubectl get svc shelfwatch-inference -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>$null
     if ($LB_URL) { break }
-    Write-Host "   Waiting for Load Balancer... ($i/30)"
+    Write-Host "   Waiting for API Load Balancer... ($i/30)"
+    Start-Sleep -Seconds 10
+}
+
+Write-Host "`nGetting Grafana Load Balancer URL..." -ForegroundColor Yellow
+$GRAFANA_URL = ""
+for ($i = 1; $i -le 30; $i++) {
+    $GRAFANA_URL = kubectl get svc shelfwatch-grafana -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>$null
+    if ($GRAFANA_URL) { break }
+    Write-Host "   Waiting for Grafana Load Balancer... ($i/30)"
     Start-Sleep -Seconds 10
 }
 
@@ -121,6 +133,7 @@ Write-Host "DEPLOYMENT COMPLETE!" -ForegroundColor Green
 Write-Host "================================"
 Write-Host ""
 Write-Host "API URL:     http://$LB_URL"
+Write-Host "Grafana:     http://$GRAFANA_URL (login: admin/shelfwatch)"
 Write-Host "Health:      http://$LB_URL/health"
 Write-Host "Metrics:     http://$LB_URL/metrics"
 Write-Host "Predict:     curl -X POST http://$LB_URL/predict -F 'image=@shelf.jpg'"

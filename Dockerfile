@@ -14,6 +14,7 @@ RUN pip install --no-cache-dir -r requirements-inference.txt
 
 # Copy application code
 COPY inference/ ./inference/
+COPY ui/ ./ui/
 
 # Weights are mounted at deploy time
 # COPY weights/ ./weights/

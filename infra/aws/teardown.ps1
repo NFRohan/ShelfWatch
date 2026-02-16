@@ -22,6 +22,8 @@ if ($confirm -ne "y" -and $confirm -ne "Y") {
 Write-Host "`nDeleting K8s services..." -ForegroundColor Yellow
 try {
     kubectl delete svc shelfwatch-inference 2>$null
+    kubectl delete svc shelfwatch-grafana 2>$null
+    kubectl delete svc shelfwatch-prometheus 2>$null
     Start-Sleep -Seconds 10
 }
 catch {}

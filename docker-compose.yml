@@ -18,6 +18,7 @@ services:
       - "8000:8000"
     volumes:
       - ./weights:/app/weights:ro    # Mount trained weights
+      - ./ui:/app/ui:ro              # Live reload frontend
     environment:
       - WEIGHTS_PATH=weights/best_int8.onnx  # INT8 quantized (26MB, ~74% smaller)
       - CONF_THRESH=0.25

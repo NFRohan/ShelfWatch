@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-provisioning
+data:
+  dashboard.yaml: |
+    apiVersion: 1
+    providers:
+      - name: 'ShelfWatch'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 30
+        allowUiUpdates: true
+        options:
+          path: /var/lib/grafana/dashboards
+          foldersFromFilesStructure: true
+  datasource.yml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        uid: prometheus-ds
+        access: proxy
+        url: http://shelfwatch-prometheus:9090
+        isDefault: true
+        editable: true
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shelfwatch-grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: shelfwatch-grafana
+  template:
+    metadata:
+      labels:
+        app: shelfwatch-grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: "shelfwatch"
+            - name: GF_USERS_ALLOW_SIGN_UP
+              value: "false"
+          volumeMounts:
+            - name: provisioning-vol
+              mountPath: /etc/grafana/provisioning/dashboards/dashboard.yaml
+              subPath: dashboard.yaml
+            - name: provisioning-vol
+              mountPath: /etc/grafana/provisioning/datasources/datasource.yml
+              subPath: datasource.yml
+            - name: dashboards-vol
+              mountPath: /var/lib/grafana/dashboards
+      volumes:
+        - name: provisioning-vol
+          configMap:
+            name: grafana-provisioning
+        - name: dashboards-vol
+          configMap:
+            name: grafana-dashboards-json
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shelfwatch-grafana
+spec:
+  type: LoadBalancer
+  selector:
+    app: shelfwatch-grafana
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
