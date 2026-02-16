@@ -1,0 +1,61 @@
+# ──────────────────────────────────────────────
+# ShelfWatch — Local Development Stack
+# ──────────────────────────────────────────────
+# Usage:
+#   docker compose up --build
+#
+# Requires:
+#   - weights/best.pt (or best.onnx) in project root
+# ──────────────────────────────────────────────
+
+services:
+  # ── Inference API ──
+  inference:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./weights:/app/weights:ro    # Mount trained weights
+    environment:
+      - WEIGHTS_PATH=weights/best_int8.onnx  # INT8 quantized (26MB, ~74% smaller)
+      - CONF_THRESH=0.25
+      - IMG_SIZE=640
+      - MODEL_NAME=yolo11l
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # ── Prometheus ──
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      inference:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Grafana ──
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=shelfwatch
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  grafana-data:

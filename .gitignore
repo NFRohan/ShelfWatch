@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+env/
+
+# Model weights — stored in S3/MLflow, not Git
+*.pt
+*.onnx
+*.engine
+*.trt
+weights/
+
+# Dataset images — too large for Git
+dataset/train/
+dataset/valid/
+dataset/test/
+dataset/images/
+dataset/labels/
+*.zip
+
+# Ultralytics training runs
+runs/
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
+
+# Environment
+.env
+.env.*
+
+# Jupyter
+.ipynb_checkpoints/

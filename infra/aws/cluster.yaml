@@ -1,0 +1,32 @@
+# ──────────────────────────────────────────────
+# ShelfWatch — EKS Cluster Config (eksctl)
+# ──────────────────────────────────────────────
+# Usage: eksctl create cluster -f infra/aws/cluster.yaml
+# Cost:  EKS control plane $0.10/hr + m7i-flex.large ~$0.08/hr
+# ──────────────────────────────────────────────
+
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: shelfwatch
+  region: us-east-1
+  version: "1.31"
+
+managedNodeGroups:
+  - name: inference-nodes
+    instanceType: m7i-flex.large
+    desiredCapacity: 1
+    minSize: 1
+    maxSize: 3
+    volumeSize: 30
+    volumeType: gp3
+    labels:
+      role: inference
+    tags:
+      project: shelfwatch
+      environment: production
+    iam:
+      withAddonPolicies:
+        autoScaler: true
+        cloudWatch: true

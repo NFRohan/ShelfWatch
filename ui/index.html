@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShelfWatch</title>
+    <style>
+        :root {
+            --bg-dark: #111827;
+            --bg-card: #1f2937;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --border: #374151;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--bg-card);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { margin: 0; font-size: 1.5rem; letter-spacing: -0.025em; }
+        .badge { 
+            background: rgba(59, 130, 246, 0.1); 
+            color: var(--accent); 
+            padding: 0.25rem 0.75rem; 
+            border-radius: 9999px; 
+            font-size: 0.875rem; 
+            font-weight: 500;
+        }
+
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 1024px) {
+            main { grid-template-columns: 1fr; }
+        }
+
+        /* Upload Area */
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 0.75rem;
+            background: rgba(31, 41, 55, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            position: relative;
+            transition: all 0.2s;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--accent);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .upload-placeholder {
+            text-align: center;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+        
+        /* Canvas */
+        #img-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative; /* Contain absolute children */
+        }
+
+        canvas {
+            max-width: 100%;
+            max-height: 600px;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+
+        h2 { margin-top: 0; font-size: 1.125rem; color: var(--text-main); margin-bottom: 1rem; }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label { font-size: 0.875rem; color: var(--text-muted); }
+        .stat-value { font-size: 1.5rem; font-weight: 600; color: var(--text-main); }
+        .stat-sub { font-size: 0.75rem; color: var(--success); }
+
+        pre {
+            background: #000;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-size: 0.875rem;
+            color: #d1d5db;
+            margin: 0;
+            max-height: 300px;
+        }
+
+        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+        }
+        button:hover { background: var(--accent-hover); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        input[type="file"] { display: none; }
+        
+        .loading {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(17, 24, 39, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            display: none;
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <h1>ShelfWatch</h1>
+        <span class="badge">v1.0.0</span>
+    </div>
+    <div style="color: var(--text-muted); font-size: 0.875rem;">
+        Powered by YOLOv8 & ONNX Runtime
+    </div>
+</header>
+
+<main>
+    <!-- Left: Image Area -->
+    <div class="upload-area" id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <input type="file" id="file-input" accept="image/*">
+        
+        <div class="upload-placeholder" id="placeholder">
+            <svg style="width: 48px; height: 48px; margin-bottom: 1rem; color: var(--text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+            <p style="font-weight: 500;">Click to upload or drag and drop</p>
+            <p style="font-size: 0.875rem;">JPG, PNG up to 10MB</p>
+        </div>
+
+        <div id="img-container" style="display: none;">
+            <canvas id="canvas"></canvas>
+            <div class="loading" id="loader"><div class="spinner"></div></div>
+        </div>
+    </div>
+
+    <!-- Right: Stats & Controls -->
+    <div class="sidebar">
+        <div class="card">
+            <h2>Analysis Results</h2>
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <span class="stat-label">Products</span>
+                    <span class="stat-value" id="count">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Inference Time</span>
+                    <span class="stat-value" id="latency">-</span>
+                    <span class="stat-sub">ms</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Model</span>
+                    <span class="stat-value" style="font-size: 1rem;" id="model-name">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Runtime</span>
+                    <span class="stat-value" style="font-size: 1rem;" id="runtime">-</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Confidence Threshold</h2>
+            <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
+                <input type="range" id="conf-slider" min="0.1" max="0.9" step="0.05" value="0.25" style="flex: 1;">
+                <span id="conf-value" style="font-family: monospace; color: var(--accent);">0.25</span>
+            </div>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">Adjust to filter low-confidence detections.</p>
+        </div>
+
+        <div class="card" style="flex: 1; display: flex; flex-direction: column;">
+            <h2>Raw Response</h2>
+            <pre id="json-output" style="flex: 1;">{}</pre>
+        </div>
+    </div>
+</main>
+
+<script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const placeholder = document.getElementById('placeholder');
+    const imgContainer = document.getElementById('img-container');
+    const canvas = document.getElementById('canvas');
+    const loader = document.getElementById('loader');
+    const ctx = canvas.getContext('2d');
+    
+    // Stats elements
+    const statCount = document.getElementById('count');
+    const statLatency = document.getElementById('latency');
+    const statModel = document.getElementById('model-name');
+    const statRuntime = document.getElementById('runtime');
+    const jsonOutput = document.getElementById('json-output');
+    const confSlider = document.getElementById('conf-slider');
+    const confValue = document.getElementById('conf-value');
+
+    let currentFile = null;
+
+    // Drag & Drop
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+
+    // File Input
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+
+    // Slider
+    confSlider.addEventListener('input', (e) => {
+        confValue.textContent = e.target.value;
+        if (currentFile) runInference(currentFile);
+    });
+
+    function handleFile(file) {
+        if (!file.type.startsWith('image/')) return alert('Please upload an image.');
+        currentFile = file;
+        
+        // Reset UI
+        placeholder.style.display = 'none';
+        imgContainer.style.display = 'flex';
+        
+        // Show image immediately
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                // Resize canvas to fit image aspect ratio but within container
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+
+        runInference(file);
+    }
+
+    async function runInference(file) {
+        loader.style.display = 'flex';
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const conf = confSlider.value;
+
+        try {
+            const start = performance.now();
+            const res = await fetch(`/predict?confidence=${conf}`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            const totalTime = performance.now() - start;
+
+            // Update Stats
+            statCount.textContent = data.count;
+            statLatency.textContent = data.inference_ms.toFixed(0);
+            statModel.textContent = data.model || 'Unknown';
+            statRuntime.textContent = data.runtime || 'Unknown';
+            jsonOutput.textContent = JSON.stringify(data, null, 2);
+
+            // Draw Boxes
+            const img = new Image();
+            img.onload = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+                
+                // Style
+                ctx.lineWidth = Math.max(2, img.width / 400); // 2px or thicker for big images
+                ctx.strokeStyle = '#00ff00';
+                ctx.font = `${Math.max(12, img.width / 60)}px sans-serif`;
+                ctx.fillStyle = '#00ff00';
+
+                data.detections.forEach(det => {
+                    const [x1, y1, x2, y2] = det.bbox;
+                    ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+                    
+                    // Label background
+                    const label = `${(det.confidence * 100).toFixed(0)}%`;
+                    const textWidth = ctx.measureText(label).width;
+                    ctx.fillStyle = 'rgba(0, 255, 0, 0.2)'; // semi-transparent fill
+                    ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+                    
+                    // Text
+                    // ctx.fillStyle = 'black';
+                    // ctx.fillText(label, x1, y1 - 5);
+                });
+            };
+            img.src = URL.createObjectURL(file);
+
+        } catch (err) {
+            console.error(err);
+            jsonOutput.textContent = `Error: ${err.message}`;
+        } finally {
+            loader.style.display = 'none';
+        }
+    }
+
+</script>
+</body>
+</html>

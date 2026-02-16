@@ -1,0 +1,22 @@
+# ──────────────────────────────────────────────
+# Inference-only dependencies (CPU ONNX — no PyTorch!)
+# Slim image for m7i-flex / c7i deployment
+# ──────────────────────────────────────────────
+
+# ONNX inference (CPU only — ~15MB vs PyTorch's ~2GB)
+onnxruntime>=1.17.0
+
+# API
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
+
+# Image processing
+Pillow>=10.0.0
+numpy>=1.24.0
+
+# Observability
+prometheus-client>=0.20.0
+
+# Performance
+orjson>=3.9.0              # 10x faster JSON serialization than stdlib

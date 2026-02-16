@@ -1,0 +1,14 @@
+# ──────────────────────────────────────────────
+# ShelfWatch — Model Configuration
+# ──────────────────────────────────────────────
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shelfwatch-config
+  labels:
+    app: shelfwatch
+data:
+  WEIGHTS_PATH: "weights/best_int8.onnx"
+  CONF_THRESH: "0.25"
+  IMG_SIZE: "640"
+  MODEL_NAME: "yolo11l"

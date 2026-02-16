@@ -1,0 +1,54 @@
+# Git & version control
+.git
+.gitignore
+
+# Dataset (huge — never send to Docker)
+dataset/
+*.zip
+
+# Training artifacts
+training/
+runs/
+mlruns/
+mlartifacts/
+
+# Model weights (mounted locally, baked on AWS)
+weights/*
+!weights/best_int8.onnx
+
+# Tests & CI
+tests/
+.github/
+ci/
+
+# Documentation & planning
+docs/
+*.md
+SPRINT_PLAN.md
+LICENSE
+
+# IDE & OS
+.vscode/
+.idea/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+
+
+
+# Env & venv
+.env
+.env.*
+.venv/
+venv/
+
+# Infra configs (not needed inside container)
+infra/
+docker-compose.yml
+
+# Scripts (not needed in production)
+scripts/
+
+# Notebooks
+*.ipynb

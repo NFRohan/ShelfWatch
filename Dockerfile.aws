@@ -1,0 +1,29 @@
+# ShelfWatch — AWS Production Dockerfile
+# Bakes INT8 ONNX weights into the image for EKS
+# (no volume mounts needed on k8s)
+# ──────────────────────────────────────────────
+
+FROM python:3.10-slim
+
+WORKDIR /app
+
+COPY requirements-inference.txt .
+RUN pip install --no-cache-dir -r requirements-inference.txt
+
+# Copy application code
+COPY inference/ ./inference/
+COPY ui/ ./ui/
+
+# Bake weights into image (26MB INT8 — tiny)
+COPY weights/best_int8.onnx ./weights/best_int8.onnx
+
+# Run as non-root user (security best practice for k8s)
+RUN adduser --disabled-password --gecos '' appuser && chown -R appuser /app
+USER appuser
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+
+CMD ["uvicorn", "inference.app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

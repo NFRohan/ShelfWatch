@@ -1,0 +1,113 @@
+# ──────────────────────────────────────────────
+# ShelfWatch — Kubernetes Deployment (AWS EKS)
+# ──────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shelfwatch-inference
+  labels:
+    app: shelfwatch
+    component: inference
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: shelfwatch
+      component: inference
+  template:
+    metadata:
+      labels:
+        app: shelfwatch
+        component: inference
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: inference
+          image: shelfwatch-inference:latest   # Replaced by deploy.sh with ECR URI
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: shelfwatch-config
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "1500m"             # m7i-flex.large has 2 vCPU
+              memory: "6Gi"            # m7i-flex.large has 8Gi total
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+---
+# ──────────────────────────────────────────────
+# Service (LoadBalancer → AWS ALB)
+# ──────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: shelfwatch-inference
+  labels:
+    app: shelfwatch
+    component: inference
+spec:
+  type: LoadBalancer
+  selector:
+    app: shelfwatch
+    component: inference
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+      name: http
+---
+# ──────────────────────────────────────────────
+# Horizontal Pod Autoscaler
+# ──────────────────────────────────────────────
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: shelfwatch-inference-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: shelfwatch-inference
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 120
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60
