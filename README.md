@@ -103,6 +103,15 @@ The project is configured for **Continuous Deployment (CD)** via GitHub Actions.
 3.  **ECR Push**: Automatic upload to the Amazon ECR registry.
 4.  **EKS Rollout**: Seamless rolling update to the Kubernetes cluster.
 
+### 📉 Cost Optimization & Deployment Strategy
+
+To maintain a production-grade infrastructure on a budget, this project implements several cloud-native cost-saving measures:
+
+-   **AWS Spot Instances**: The cluster utilizes [Spot instances](https://aws.amazon.com/ec2/spot/) for its managed nodegroups, providing **70-90% savings** compared to on-demand pricing.
+-   **Instance Diversification**: The node group is diversified across `m7i-flex.large`, `c7i-flex.large`, and `t3.small` types to ensure high Spot fulfillment and resilience.
+-   **Resource "Bin-Packing"**: CPU requests are right-sized to `200m` based on real-world telemetry (~6% CPU usage), allowing for dense pod packing on smaller nodes.
+-   **Blue/Green Node Migration**: The infrastructure is designed for "hot" migration. New node groups can be provisioned and old ones drained without any impact on the production LoadBalancer URLs.
+
 To provision the infrastructure for the first time or perform a manual deployment, use:
 
 ```powershell

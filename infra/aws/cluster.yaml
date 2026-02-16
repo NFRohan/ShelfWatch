@@ -14,11 +14,12 @@ metadata:
   version: "1.31"
 
 managedNodeGroups:
-  - name: inference-nodes
-    instanceType: m7i-flex.large
-    desiredCapacity: 1
+  - name: spot-inference-nodes
+    instanceTypes: ["m7i-flex.large", "c7i-flex.large", "t3.small"]
+    capacityType: SPOT
+    desiredCapacity: 2
     minSize: 1
-    maxSize: 3
+    maxSize: 4
     volumeSize: 30
     volumeType: gp3
     labels:

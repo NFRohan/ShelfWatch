@@ -36,11 +36,11 @@ spec:
                 name: shelfwatch-config
           resources:
             requests:
-              cpu: "500m"
+              cpu: "200m"
               memory: "1Gi"
             limits:
-              cpu: "1500m"             # m7i-flex.large has 2 vCPU
-              memory: "6Gi"            # m7i-flex.large has 8Gi total
+              cpu: "1000m"
+              memory: "2Gi"
           readinessProbe:
             httpGet:
               path: /health
