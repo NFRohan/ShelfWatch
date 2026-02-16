@@ -9,12 +9,13 @@ build/
 venv/
 env/
 
-# Model weights — stored in S3/MLflow, not Git
+# Model weights — stored in S3/MLflow, except production INT8
 *.pt
 *.onnx
 *.engine
 *.trt
-weights/
+weights/*
+!weights/best_int8.onnx
 
 # Dataset images — too large for Git
 dataset/train/
