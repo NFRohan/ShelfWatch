@@ -24,10 +24,11 @@
 ![Interface Overview](./images/UI.png)
 
 ### Key Technical Characteristics
-*   **Infrastructure**: Fully containerized deployment managed via Kubernetes.
-*   **Optimization**: INT8 dynamic quantization reduces model size by ~74% while maintaining sub-500ms latency.
-*   **Observability**: Integrated metrics pipeline using Prometheus and Grafana.
-*   **Scalability**: Native Horizontal Pod Autoscaler (HPA) integration based on resource utilization.
+*   **Automated Infrastructure**: Deployment and lifecycle management via `eksctl` and `kubectl`.
+*   **Latency-Optimized Inference**: INT8 quantization provides sub-500ms response times on CPU.
+*   **Integrated Monitoring**: Performance telemetry aggregated via Prometheus and Grafana.
+*   **Continuous Integration**: Automated linting and testing via GitHub Actions.
+*   **Dynamic Scaling**: Resource allocation managed by Kubernetes Horizontal Pod Autoscaler. (HPA) integration based on resource utilization.
 
 ## 🏗️ System Architecture
 
@@ -94,8 +95,16 @@ docker compose up --build
 ```
 The **Interactive UI** is served at `http://localhost:8000`.
 
-### AWS Deployment
-Execute the automated provisioning script:
+### AWS Deployment & CI/CD
+
+The project is configured for **Continuous Deployment (CD)** via GitHub Actions. Any push to `main` automatically triggers:
+1.  **Quality Check**: Automated linting (`ruff`) and testing (`pytest`).
+2.  **Container Build**: Optimized Docker image creation (`Dockerfile.aws`).
+3.  **ECR Push**: Automatic upload to the Amazon ECR registry.
+4.  **EKS Rollout**: Seamless rolling update to the Kubernetes cluster.
+
+To provision the infrastructure for the first time or perform a manual deployment, use:
+
 ```powershell
 .\infra\aws\deploy.ps1
 ```

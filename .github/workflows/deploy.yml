@@ -1,0 +1,63 @@
+name: CD — Deploy to AWS EKS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    name: Quality Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff pytest httpx fastapi uvicorn pillow numpy ultralytics onnxruntime
+      - name: Lint with Ruff
+        run: ruff check . --output-format=github
+      - name: Run tests
+        run: pytest tests/ -v --tb=short
+
+  deploy:
+    name: Build & Push to ECR
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and Push Image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: shelfwatch-inference
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -f Dockerfile.aws -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      - name: Update Kubernetes Deployment
+        run: |
+          aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
+          # Apply all manifests (ConfigMaps, Services etc.)
+          kubectl apply -f infra/k8s/
+          # Force a restart if using the 'latest' tag or update to specific SHA
+          kubectl set image deployment/shelfwatch-inference inference=${{ steps.login-ecr.outputs.registry }}/shelfwatch-inference:${{ github.sha }}
+          kubectl rollout status deployment/shelfwatch-inference

@@ -52,7 +52,7 @@ def predict(image_path: str, confidence: float = 0.25):
 
     data = r.json()
 
-    print(f"\n📊 Results:")
+    print("\n📊 Results:")
     print(f"   Products detected: {data['count']}")
     print(f"   Inference time:    {data['inference_ms']:.1f}ms (server)")
     print(f"   Round-trip time:   {total_ms:.1f}ms (total)")
