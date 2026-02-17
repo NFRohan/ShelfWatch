@@ -113,7 +113,7 @@ Real-time telemetry includes tail latency tracking (p95/p99) and resource consum
 
 ## 🛠️ Tech Stack
 
-- **Model**: YOLOv8 (Ultralytics)
+- **Model**: YOLOv11 (Ultralytics)
 - **Runtime**: ONNX Runtime (INT8 Quantized)
 - **Backend**: FastAPI (Python)
 - **Frontend**: Vanilla JavaScript / HTML5 / Canvas
