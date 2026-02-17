@@ -19,7 +19,7 @@
 
 ## 🚀 Overview
 
-**ShelfWatch** is an automated stock auditing platform that utilizes a fine-tuned **YOLOv8** model for product detection. The system is deployed as a scalable inference service on AWS EKS, optimized for low-latency CPU execution.
+**ShelfWatch** is an automated stock auditing platform that utilizes a fine-tuned **YOLOv11** model for product detection. The system is deployed as a scalable inference service on AWS EKS, optimized for low-latency CPU execution.
 
 ![Interface Overview](./images/UI.png)
 
