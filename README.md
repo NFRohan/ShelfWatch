@@ -16,7 +16,7 @@
 **Retail inventory analysis system.**
 *Object detection and stock monitoring at scale.*
 
-[**Demo UI**](http://a3033d45162184da488eb645414d2ffb-1014427016.us-east-1.elb.amazonaws.com) • [**Architecture Docs**](docs/architecture.md)
+[**Demo UI**](http://a308b65d0819a46ebaea83d2dcf9e3af-1215252771.us-east-1.elb.amazonaws.com) • [**Architecture Docs**](docs/architecture.md)
 
 </div>
 
@@ -93,7 +93,8 @@ flowchart TB
         ArgoCD ==>|"Syncs"| EKS
     end
 
-    Client ==>|"POST /predict"| NGINX
+    Client ==>|"GET /"| NGINX
+    Client -.->|"GET /grafana"| NGINX
 ```
 
 ### Components
@@ -142,7 +143,13 @@ Run the complete stack using Docker Compose:
 ```bash
 docker compose up --build
 ```
-The **Live Interactive UI** is served at [http://a3033d45162184da488eb645414d2ffb-1014427016.us-east-1.elb.amazonaws.com/](http://a3033d45162184da488eb645414d2ffb-1014427016.us-east-1.elb.amazonaws.com/).
+The **Live Interactive UI** is served at [http://a308b65d0819a46ebaea83d2dcf9e3af-1215252771.us-east-1.elb.amazonaws.com](http://a308b65d0819a46ebaea83d2dcf9e3af-1215252771.us-east-1.elb.amazonaws.com).
+    
+### ⚠️ Known Limitations & Troubleshooting
+
+-   **Image Upload Size**: The inference endpoint is configured with a **20MB** body size limit via NGINX Ingress rules. Uploads exceeding this size will return a `413 Request Entity Too Large` error.
+-   **Cold Starts**: The first request to a new pod may experience slightly higher latency as the ONNX model initializes in memory. Subsequent requests typically complete in <500ms.
+-   **Browser Cache**: If you see old versions of the UI, try a hard refresh (Ctrl+F5) as static assets are served by NGINX.
 
 ### AWS Deployment & CI/CD
 
