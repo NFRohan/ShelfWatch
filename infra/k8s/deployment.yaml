@@ -57,7 +57,7 @@ spec:
             timeoutSeconds: 5
 ---
 # ──────────────────────────────────────────────
-# Service (LoadBalancer → AWS ALB)
+# Service (ClusterIP)
 # ──────────────────────────────────────────────
 apiVersion: v1
 kind: Service
@@ -67,7 +67,7 @@ metadata:
     app: shelfwatch
     component: inference
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: shelfwatch
     component: inference

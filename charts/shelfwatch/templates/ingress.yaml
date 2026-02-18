@@ -16,3 +16,10 @@ spec:
                 name: {{ include "shelfwatch.fullname" . }}
                 port:
                   number: {{ .Values.service.port }}
+          - path: /grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: shelfwatch-grafana
+                port:
+                  number: 80
