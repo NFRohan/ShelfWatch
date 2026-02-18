@@ -262,6 +262,9 @@ CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "
 
 **Deliverable:** Fully automated GitOps pipeline, ArgoCD dashboard.
 
+> [!NOTE]
+> **Credentials**: See `creds.md` (local only).
+
 ---
 
 ## Stretch Goals *(pick 1–2)*

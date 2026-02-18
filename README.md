@@ -13,7 +13,7 @@
 **Retail inventory analysis system.**
 *Object detection and stock monitoring at scale.*
 
-[**Demo UI**](http://a86b4f4c852b64526ae8c22a8b715100-2106448101.us-east-1.elb.amazonaws.com) • [**Analytics Dashboard**](http://aa7f24b6fcb1840baa60271925a86de9-1362079785.us-east-1.elb.amazonaws.com) • [**Architecture Docs**](docs/architecture.md)
+[**Demo UI**](http://a3033d45162184da488eb645414d2ffb-1014427016.us-east-1.elb.amazonaws.com) • [**Architecture Docs**](docs/architecture.md)
 
 </div>
 
@@ -137,7 +137,7 @@ Run the complete stack using Docker Compose:
 ```bash
 docker compose up --build
 ```
-The **Live Interactive UI** is served at [http://a86b4f4c852b64526ae8c22a8b715100-2106448101.us-east-1.elb.amazonaws.com/](http://a86b4f4c852b64526ae8c22a8b715100-2106448101.us-east-1.elb.amazonaws.com/).
+The **Live Interactive UI** is served at [http://a3033d45162184da488eb645414d2ffb-1014427016.us-east-1.elb.amazonaws.com/](http://a3033d45162184da488eb645414d2ffb-1014427016.us-east-1.elb.amazonaws.com/).
 
 ### AWS Deployment & CI/CD
 
