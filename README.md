@@ -6,6 +6,8 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688?logo=fastapi&logoColor=white)
 ![ONNX](https://img.shields.io/badge/ONNX-Runtime-blueviolet?logo=onnx&logoColor=white)
 ![Kubernetes](https://img.shields.io/badge/AWS-EKS-FF9900?logo=kubernetes&logoColor=white)
+![Helm](https://img.shields.io/badge/Helm-3.14-0F1689?logo=helm&logoColor=white)
+![ArgoCD](https://img.shields.io/badge/ArgoCD-GitOps-EF7B4D?logo=argo&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 **Retail inventory analysis system.**
@@ -76,8 +78,15 @@ flowchart TB
             ALB ===>|Routes HTTP Traffic| API
         end
 
-        Actions -->|1. docker build & push| ECR
-        Actions -->|2. kubectl set image deployment| EKS
+        %% GitOps Workflow
+        subgraph Ops[GitOps Control Plane]
+            ArgoCD[ArgoCD Controller]
+        end
+
+        Actions -->|1. Build & Push Image| ECR
+        Actions -->|2. Update Helm Values| GH
+        ArgoCD -.->|Watches for Changes| GH
+        ArgoCD ===>|Syncs State| EKS
         ECR -.->|Pulls latest image| Pod
     end
 
@@ -118,6 +127,7 @@ Real-time telemetry includes tail latency tracking (p95/p99) and resource consum
 - **Backend**: FastAPI (Python)
 - **Frontend**: Vanilla JavaScript / HTML5 / Canvas
 - **Cloud**: AWS EKS, ELB, ECR
+- **DevOps**: Helm, ArgoCD, GitHub Actions
 - **Observability**: Prometheus, Grafana
 
 ## ⚡ Setup & Deployment
@@ -145,6 +155,16 @@ To maintain a production-grade infrastructure on a budget, this project implemen
 -   **Instance Diversification**: The node group is diversified across `m7i-flex.large`, `c7i-flex.large`, and `t3.small` types to ensure high Spot fulfillment and resilience.
 -   **Resource "Bin-Packing"**: CPU requests are right-sized to `200m` based on real-world telemetry (~6% CPU usage), allowing for dense pod packing on smaller nodes.
 -   **Blue/Green Node Migration**: The infrastructure is designed for "hot" migration. New node groups can be provisioned and old ones drained without any impact on the production LoadBalancer URLs.
+
+### ☁️ DevOps Transformation (GitOps)
+
+The project has migrated from imperative "ClickOps" to a declarative **GitOps** model:
+
+1.  **Helm Packaging**: The entire application (Deployment, Service, HPA, ConfigMap) is defined as a reusable [Helm Chart](./charts/shelfwatch).
+2.  **ArgoCD Synchronization**: An in-cluster ArgoCD controller monitors the GitHub repository.
+3.  **Automated Rollouts**: When a new image is pushed to ECR, the CI pipeline updates `values.yaml`, and ArgoCD automatically syncs the cluster state, ensuring zero drift.
+
+![ArgoCD Dashboard](./images/ArgoCD.png)
 
 To provision the infrastructure for the first time or perform a manual deployment, use:
 

@@ -249,6 +249,21 @@ CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "
 
 ---
 
+### Sprint 11 — DevOps Transformation (GitOps) ☁️ *(1 week)*
+
+**Goal:** Migrate to a pull-based deployment model using Helm and ArgoCD.
+
+| # | Task | Status |
+|---|---|---|
+| 11.1 | Package application as a Helm Chart (`charts/shelfwatch`) | ✅ |
+| 11.2 | Install ArgoCD on EKS and expose UI | ✅ |
+| 11.3 | Implement GitOps workflow (ArgoCD watches GitHub `main`) | ✅ |
+| 11.4 | Verify auto-sync and resilience | ✅ |
+
+**Deliverable:** Fully automated GitOps pipeline, ArgoCD dashboard.
+
+---
+
 ## Stretch Goals *(pick 1–2)*
 
 | Idea | Complexity |
@@ -261,23 +276,28 @@ CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "
 
 ---
 
-## CI/CD Strategy
+## CI/CD Strategy (GitOps)
 
 ```mermaid
 flowchart LR
-    A[Push to main] --> B[Build & Test Image]
-    B --> C[Push to ECR]
-    C --> D[Deploy to Staging]
-    D --> E[Integration Smoke Tests]
-    E --> F{Pass?}
-    F -- Yes --> G[Manual Approval]
-    G --> H[Promote to Prod]
-    F -- No --> I[Alert & Block]
+    A[Push to main] --> B[GitHub Actions]
+    B -->|Build & Test| C[Docker Build]
+    C -->|Push Image| D[ECR Registry]
+    
+    subgraph Cluster [EKS Cluster]
+        E[ArgoCD Controller]
+        F[ShelfWatch Pods]
+    end
+
+    E -.->|Polls| A
+    E -.->|Detects Image/Config Change| F
+    E ===>|Syncs State| F
 ```
 
-- **GitHub Actions** orchestrates the full pipeline.
-- **MLflow** as model registry — each model tagged with dataset commit hash, hyperparams, and eval metrics.
-- **Model weights stay out of Git** — stored in S3 (or MLflow artifact store) and referenced by URI.
+- **GitHub Actions**: Handles CI (Lint, Test, Build, Push).
+- **ArgoCD**: Handles CD (Syncs cluster state with Git configuration).
+- **Helm**: Packages the application logic and configuration.
+- **Model weights**: Baked into the Docker image for strict versioning.
 
 ---
 

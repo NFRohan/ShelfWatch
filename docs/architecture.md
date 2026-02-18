@@ -100,3 +100,28 @@ How we would scale from 1 req/s to 1,000 req/s:
 2.  **Async Queue**: Move from synchronous HTTP to an async worker pattern (SQS + Celery/k8s-jobs) to buffer bursts.
 3.  **CDN / Edge**: Use CloudFront to cache static assets and potentially edge-compute for preprocessing.
 4.  **Database**: Introduce DynamoDB to store detection results for historical analysis.
+
+## 4. DevOps & GitOps Architecture
+
+The system uses a **GitOps** approach for continuous delivery, minimizing manual operations and ensuring infrastructure-as-code consistency.
+
+```mermaid
+flowchart LR
+    subgraph CI [Continuous Integration]
+        Dev[Developer] -->|Push| Git[GitHub]
+        Git -->|Trigger| GHA[GitHub Actions]
+        GHA -->|Build & Push| ECR[ECR Registry]
+    end
+
+    subgraph CD [Continuous Deployment]
+        Argo[ArgoCD in K8s]
+        Argo -->|Watch| Git
+        Argo -->|Sync| K8s[EKS Cluster]
+        K8s -->|Pull Image| ECR
+    end
+```
+
+### Components
+1.  **Helm Chart**: All K8s resources (Deployment, Service, HPA, ConfigMap) are packaged in `charts/shelfwatch`.
+2.  **ArgoCD**: Monitors the `main` branch. When `values.yaml` is updated (e.g., new image tag), ArgoCD automatically synchronizes the cluster.
+3.  **Self-Healing**: ArgoCD detects manual changes to the cluster (drifts) and reverts them to match the Git state.
