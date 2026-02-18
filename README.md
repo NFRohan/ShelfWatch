@@ -101,6 +101,9 @@ flowchart TB
 - **Inference Service**: FastAPI application serving detection requests.
 - **Model Engine**: In-process ONNX Runtime (CPU) executing quantized weights.
 - **Monitoring Stack**: Prometheus for metric collection and Grafana for visualization.
+- **Log Aggregation**: Loki + Promtail for centralized logging.
+
+![Loki Logging](./images/logging.png)
 
 ## 📡 API Reference
 

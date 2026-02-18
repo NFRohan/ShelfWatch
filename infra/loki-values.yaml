@@ -48,6 +48,8 @@ minio:
   enabled: false
 test:
   enabled: false
+
+# Monitoring configuration - try both locations to cover chart versions
 monitoring:
   selfMonitoring:
     enabled: false
@@ -55,6 +57,10 @@ monitoring:
       installOperator: false
   lokiCanary:
     enabled: false
+
+# Also disable at top level if applicable for this chart version
+lokiCanary:
+  enabled: false
 
 chunksCache:
   enabled: false
