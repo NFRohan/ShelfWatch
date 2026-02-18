@@ -8,7 +8,7 @@ image:
   repository: 651564454904.dkr.ecr.us-east-1.amazonaws.com/shelfwatch-inference
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "18d820d13a542496e4616be9dc65076fa34f4aa6"
+  tag: "1725e65d1b04523d51c079bc00f2cf4c267f1bd2"
 
 imagePullSecrets: []
 nameOverride: ""
