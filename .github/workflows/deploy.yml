@@ -57,18 +57,3 @@ jobs:
         run: |
           docker push ${{ steps.login-ecr.outputs.registry }}/shelfwatch-inference:${{ github.sha }}
 
-      - name: Update Helm Chart & Commit (GitOps)
-        env:
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          # 1. Update tag in values.yaml
-          sed -i "s/tag: \".*\"/tag: \"$IMAGE_TAG\"/" charts/shelfwatch/values.yaml
-          
-          # 2. Configure Git
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # 3. Commit and Push
-          git add charts/shelfwatch/values.yaml
-          git commit -m "chore(deploy): update image tag to $IMAGE_TAG"
-          git push origin main
