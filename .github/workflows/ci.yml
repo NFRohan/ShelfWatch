@@ -29,3 +29,8 @@ jobs:
 
       - name: Run tests
         run: pytest tests/ -v --tb=short
+
+      - name: Security Audit (Dependencies)
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements-inference.txt --ignore-vuln GHSA-w596-4wvx-j9j6
