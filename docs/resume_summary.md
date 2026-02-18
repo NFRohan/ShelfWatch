@@ -7,14 +7,14 @@
 Designed and built a cloud-native computer vision system to automate stock auditing in supermarkets.
 
 ### **Key Technical Achievements**
-*   **Production-Grade Inference**: Deployed a fine-tuned **YOLOv8** model via **FastAPI**, handling image preprocessing, validation, and structured logging.
+*   **Production-Grade Inference**: Deployed a fine-tuned **YOLO11L** model via **FastAPI**, handling image preprocessing, validation, and structured logging.
 *   **Optimized Performance**: Achieved **<300ms latency on CPU** by converting models to **ONNX** and applying **INT8 quantization**, reducing cloud costs by 80% compared to GPU instances.
 *   **Cloud-Native Architecture**: Containerized the application with **Docker** and orchestrated it on **AWS EKS** (Kubernetes), utilizing **Horizontal Pod Autoscalers (HPA)** to handle traffic spikes.
 *   **Observability**: Instrumented the service with **Prometheus** and **Grafana** to monitor key golden signals (latency, error rate, saturation) and detect model drift.
 *   **MLOps Best Practices**: Implemented a reproducible pipeline with **MLflow** for experiment tracking and **CI/CD** for automated testing and deployment.
 
 ### **Tech Stack**
-*   **ML/AI**: PyTorch, YOLOv8, ONNX Runtime, Ultralytics
+*   **ML/AI**: PyTorch, YOLO11L, ONNX Runtime, Ultralytics
 *   **Backend**: Python, FastAPI, Pydantic
 *   **Infrastructure**: AWS (EKS, ECR), Docker, Kubernetes, Helm
 *   **Ops**: Prometheus, Grafana, GitHub Actions

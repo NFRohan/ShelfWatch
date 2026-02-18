@@ -14,7 +14,7 @@
 *   **Visual:** Show the Architecture Diagram in VS Code.
 *   **Script:**
     > "Hi, I'm [Your Name], and this is ShelfWatch — an automated shelf analysis system I built to detect products in dense retail environments."
-    > "The system uses a YOLOv8 model fine-tuned on the SKU-110K dataset. It's deployed on AWS EKS with a fully automated CI/CD pipeline."
+    > "The system uses a YOLO11L model fine-tuned on the SKU-110K dataset. It's deployed on AWS EKS with a fully automated CI/CD pipeline."
     > "Key features include:
     > 1.  **Optimized Inference**: ONNX Runtime with INT8 quantization for 3x speedup on CPU.
     > 2.  **Scalable Infrastructure**: Kubernetes HPA to handle traffic spikes.

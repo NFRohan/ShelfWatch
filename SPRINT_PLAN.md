@@ -10,7 +10,7 @@
 | Layer | Technology |
 |---|---|
 | **Dataset & Labeling** | Roboflow |
-| **Model Training** | Ultralytics YOLOv8 |
+| **Model Training** | Ultralytics YOLO11 |
 | **Inference API** | FastAPI |
 | **Containerization** | Docker (multi-stage) |
 | **Orchestration** | Kubernetes / Minikube (local) / EKS (prod) |
@@ -37,7 +37,7 @@
 
 ```
 ShelfWatch/
-├── dataset/            # Dataset configs, YOLOv8 YAML, sample pointers
+├── dataset/            # Dataset configs, YOLO11 YAML, sample pointers
 ├── training/           # Training scripts, MLflow logging, evaluation
 ├── inference/          # FastAPI app, Dockerfile, ONNX export
 ├── infra/
@@ -72,11 +72,11 @@ ShelfWatch/
 
 ### Sprint 1 — Dataset, Baseline Training & Evaluation *(1 week)*
 
-**Goal:** Get a working YOLOv8 model trained on a public shelf dataset and export `best.pt`.
+**Goal:** Get a working YOLO11 model trained on a public shelf dataset and export `best.pt`.
 
 | # | Task | Status |
 |---|---|---|
-| 1.1 | Download a supermarket-shelf dataset from Roboflow; convert to YOLOv8 format | ☐ |
+| 1.1 | Download a supermarket-shelf dataset from Roboflow; convert to YOLO11 format | ☐ |
 | 1.2 | Write `training/train.py` using Ultralytics to produce `best.pt` | ☐ |
 | 1.3 | Evaluate on holdout set — log mAP, precision, recall | ☐ |
 | 1.4 | Log metrics to simple CSV **and** to MLflow experiment | ☐ |
@@ -90,7 +90,7 @@ ShelfWatch/
 # training/train.py
 from ultralytics import YOLO
 
-model = YOLO("yolov8n.pt")
+model = YOLO("yolo11n.pt")
 model.train(data="dataset/shelf.yaml", epochs=30, imgsz=640, batch=8)
 # Ultralytics auto-saves best.pt to runs/detect/train/weights/
 ```

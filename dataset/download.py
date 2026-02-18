@@ -1,5 +1,5 @@
 """
-Download SKU-110K dataset from Roboflow in YOLOv8 format.
+Download SKU-110K dataset from Roboflow in YOLO11 format (compatible with YOLOv8).
 
 Usage:
     export ROBOFLOW_API_KEY="your_key_here"

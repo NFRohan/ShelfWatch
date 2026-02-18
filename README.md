@@ -19,7 +19,7 @@
 
 ## 🚀 Overview
 
-**ShelfWatch** is an automated stock auditing platform that utilizes a fine-tuned **YOLOv8** model for product detection. The system is deployed as a scalable inference service on AWS EKS, optimized for low-latency CPU execution.
+**ShelfWatch** is an automated stock auditing platform that utilizes a fine-tuned **YOLO11L** model for product detection. The system is deployed as a scalable inference service on AWS EKS, optimized for low-latency CPU execution.
 
 ![Interface Overview](./images/UI.png)
 
@@ -113,7 +113,7 @@ Real-time telemetry includes tail latency tracking (p95/p99) and resource consum
 
 ## 🛠️ Tech Stack
 
-- **Model**: YOLOv8 (Ultralytics)
+- **Model**: YOLO11L (Ultralytics)
 - **Runtime**: ONNX Runtime (INT8 Quantized)
 - **Backend**: FastAPI (Python)
 - **Frontend**: Vanilla JavaScript / HTML5 / Canvas
