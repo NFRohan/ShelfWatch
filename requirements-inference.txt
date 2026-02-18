@@ -12,9 +12,9 @@ jaraco.context>=6.1.0
 wheel>=0.46.2
 
 # Core
-fastapi>=0.115.0  # Pulls in starlette>=0.37.2 (fixes httpx issue)
-uvicorn[standard]>=0.30.0
-python-multipart>=0.0.18
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
 
 # Image processing
 Pillow>=10.0.0
