@@ -133,7 +133,7 @@ Real-time telemetry includes tail latency tracking (p95/p99) and resource consum
 - **Networking**: NGINX Ingress Controller (L7 traffic routing)
 - **DevOps**: Helm, ArgoCD, Argo Rollouts, ArgoCD Image Updater, GitHub Actions
 - **Security**: Trivy (container scanning), pip-audit (dependency scanning)
-- **Observability**: Prometheus, Grafana
+- **Observability**: Prometheus, Loki, Promtail, Grafana
 
 ## ⚡ Setup & Deployment
 

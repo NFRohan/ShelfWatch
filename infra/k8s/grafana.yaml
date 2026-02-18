@@ -26,6 +26,15 @@ data:
         url: http://shelfwatch-prometheus:9090
         isDefault: true
         editable: true
+      - name: Loki
+        type: loki
+        uid: loki-ds
+        access: proxy
+        url: http://loki:3100
+        isDefault: false
+        editable: true
+        jsonData:
+          maxLines: 1000
 ---
 apiVersion: apps/v1
 kind: Deployment
