@@ -1,13 +1,11 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
 metadata:
   name: {{ include "shelfwatch.fullname" . }}
   labels:
     {{- include "shelfwatch.labels" . | nindent 4 }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
-  {{- end }}
   selector:
     matchLabels:
       {{- include "shelfwatch.selectorLabels" . | nindent 6 }}
@@ -35,17 +33,24 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.service.targetPort }}
+              containerPort: 8000
               protocol: TCP
-          envFrom:
-            - configMapRef:
-                name: {{ include "shelfwatch.fullname" . }}-config
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
           readinessProbe:
             {{- toYaml .Values.readinessProbe | nindent 12 }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "shelfwatch.fullname" . }}-config
+          volumeMounts:
+            - name: shm
+              mountPath: /dev/shm
+      volumes:
+        - name: shm
+          emptyDir:
+            medium: Memory
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -58,3 +63,17 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+  strategy:
+    canary:
+      canaryService: {{ include "shelfwatch.fullname" . }}-canary
+      stableService: {{ include "shelfwatch.fullname" . }}
+      trafficRouting:
+        nginx:
+          stableIngress: {{ include "shelfwatch.fullname" . }}
+      steps:
+        - setWeight: 20
+        - analysis:
+            templates:
+              - templateName: inference-smoke-test
+        - setWeight: 50
+        - pause: { duration: 30s }

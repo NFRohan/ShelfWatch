@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: inference-smoke-test
+spec:
+  metrics:
+  - name: smoke-test
+    provider:
+      job:
+        spec:
+          backoffLimit: 1
+          template:
+            spec:
+              containers:
+              - name: test
+                image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}" 
+                command: ["python", "-c"]
+                args:
+                - |
+                  import requests
+                  import time
+                  import sys
+                  
+                  # Wait for canary service
+                  url = "http://{{ include "shelfwatch.fullname" . }}-canary/health"
+                  print(f"Checking {url}...")
+                  
+                  for i in range(10):
+                      try:
+                          r = requests.get(url, timeout=2)
+                          if r.status_code == 200:
+                              print("Canary is healthy!")
+                              sys.exit(0)
+                      except Exception as e:
+                        print(f"Waiting... {e}")
+                      time.sleep(2)
+                  
+                  print("Canary failed smoke test!")
+                  sys.exit(1)
+              restartPolicy: Never
