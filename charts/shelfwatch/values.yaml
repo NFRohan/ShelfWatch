@@ -5,10 +5,10 @@
 replicaCount: 1
 
 image:
-  repository: 339712793861.dkr.ecr.us-east-1.amazonaws.com/shelfwatch-inference
+  repository: 651564454904.dkr.ecr.us-east-1.amazonaws.com/shelfwatch-inference
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "latest"
+  tag: "442603b3d671e9159c1afbe3309c5d79cde1a623"
 
 imagePullSecrets: []
 nameOverride: ""
