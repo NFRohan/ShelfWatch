@@ -7,7 +7,12 @@
 onnxruntime>=1.17.0
 
 # API
-fastapi>=0.110.0
+# Security Fixes
+jaraco.context>=6.1.0
+wheel>=0.46.2
+
+# Core
+fastapi==0.109.0
 uvicorn[standard]>=0.27.0
 python-multipart>=0.0.6
 
