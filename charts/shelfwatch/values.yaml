@@ -84,3 +84,9 @@ readinessProbe:
   initialDelaySeconds: 15
   periodSeconds: 10
   timeoutSeconds: 5
+
+config:
+  weightsPath: "weights/best_int8.onnx"
+  confThresh: "0.25"
+  imgSize: "640"
+  modelName: "yolo11l"
