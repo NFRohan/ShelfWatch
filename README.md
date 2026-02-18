@@ -3,11 +3,14 @@
 <div align="center">
 
 ![Python](https://img.shields.io/badge/Python-3.10-blue?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688?logo=fastapi&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?logo=fastapi&logoColor=white)
 ![ONNX](https://img.shields.io/badge/ONNX-Runtime-blueviolet?logo=onnx&logoColor=white)
 ![Kubernetes](https://img.shields.io/badge/AWS-EKS-FF9900?logo=kubernetes&logoColor=white)
 ![Helm](https://img.shields.io/badge/Helm-3.14-0F1689?logo=helm&logoColor=white)
 ![ArgoCD](https://img.shields.io/badge/ArgoCD-GitOps-EF7B4D?logo=argo&logoColor=white)
+![Argo Rollouts](https://img.shields.io/badge/Argo_Rollouts-Canary-blue?logo=argo&logoColor=white)
+![NGINX](https://img.shields.io/badge/NGINX-Ingress-009639?logo=nginx&logoColor=white)
+![Trivy](https://img.shields.io/badge/Trivy-Security-1904DA?logo=aqua&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 **Retail inventory analysis system.**
@@ -26,71 +29,71 @@
 ![Interface Overview](./images/UI.png)
 
 ### Key Technical Characteristics
-*   **Automated Infrastructure**: Deployment and lifecycle management via `eksctl` and `kubectl`.
+*   **Progressive Delivery**: Canary deployments via Argo Rollouts with automated smoke tests before promotion.
 *   **Latency-Optimized Inference**: INT8 quantization provides sub-500ms response times on CPU.
-*   **Integrated Monitoring**: Performance telemetry aggregated via Prometheus and Grafana.
-*   **Continuous Integration**: Automated linting and testing via GitHub Actions.
-*   **Dynamic Scaling**: Resource allocation managed by Kubernetes Horizontal Pod Autoscaler (HPA).
+*   **DevSecOps Pipeline**: Container scanning (Trivy) and dependency auditing (pip-audit) integrated into CI.
+*   **GitOps-Driven**: ArgoCD + Image Updater for fully automated, drift-free deployments.
+*   **Dynamic Scaling**: NGINX Ingress with weighted traffic splitting and HPA-driven autoscaling.
 *   **Spot Resilience**: Built-in 2-minute interruption handling with Pod Disruption Budgets (PDB) and multi-node redundancy for zero-downtime operation on AWS Spot instances.
 
 ## 🏗️ System Architecture
 
-The architecture follows a microserviced approach within an **AWS EKS** cluster. External traffic is routed through AWS Load Balancers to isolated inference and observability endpoints.
+The architecture follows a microserviced approach within an **AWS EKS** cluster. External traffic is routed through an **NGINX Ingress Controller** that supports weighted canary traffic splitting for progressive delivery.
 
 ```mermaid
 flowchart TB
-    Client([Store Manager / Client API])
+    Client(["Store Manager / Client API"])
 
-    subgraph CICD[CI/CD Pipeline]
-        GH[GitHub Repository] -->|Push to main| Actions[GitHub Actions]
+    subgraph CICD["CI/CD Pipeline"]
+        GH["GitHub Repository"] -->|Push to main| Actions["GitHub Actions"]
+        Actions -->|"Lint, Test, Scan"| SecurityGate{"Trivy + pip-audit"}
+        SecurityGate -->|Pass| Build["Docker Build + Push"]
     end
 
-    subgraph AWS[AWS Cloud Environment]
+    subgraph AWS["AWS Cloud"]
         direction TB
-        
-        ECR[(Amazon ECR<br/>Image Registry)]
-        ALB[AWS Load Balancer]
+        ECR[("Amazon ECR")]
 
-        subgraph EKS[Amazon EKS Cluster: shelfwatch]
+        subgraph EKS["Amazon EKS Cluster"]
             direction TB
-            HPA[[K8s Horizontal Pod Autoscaler<br/>Target: 70% CPU, Min: 1, Max: 3]]
+            NGINX["NGINX Ingress Controller"]
+            HPA[["HPA: 70% CPU, Min 2, Max 3"]]
 
-            subgraph Nodes[Spot Node Group<br/>m7i-flex.large / t3.small]
-                subgraph Pod[Inference Pod<br/>CPU Request: 200m]
-                    API[FastAPI Service<br/>Endpoints: /predict, /health, /metrics]
-                    ThreadPool[Thread Pool Executor]
-                    ONNX[ONNX Runtime<br/>INT8 Quantized Weights]
-
-                    API -->|Offload image processing| ThreadPool
-                    ThreadPool -->|Execute CPU Inference| ONNX
-                end
+            subgraph Rollout["Argo Rollout - Canary"]
+                Stable["Stable Pods 80-100%"]
+                Canary["Canary Pod 0-20%"]
             end
 
-            subgraph Observability[Observability Stack]
-                Prometheus[(Prometheus)]
-                Grafana[Grafana Dashboards]
-
-                Prometheus -.->|Scrapes every 15s| API
-                Grafana -.->|Queries PromQL| Prometheus
+            subgraph SmokeTest["AnalysisRun"]
+                Job["Inference Smoke Test"]
             end
 
-            HPA -.->|Scales Pods| Pod
-            ALB ===>|Routes HTTP Traffic| API
+            subgraph Observability["Observability"]
+                Prometheus[("Prometheus")]
+                Grafana["Grafana"]
+            end
+
+            NGINX -->|"Weighted Split"| Stable
+            NGINX -.->|"Canary Traffic"| Canary
+            Job -.->|"Validates"| Canary
+            HPA -.->|"Scales"| Rollout
+            Prometheus -.->|"Scrapes"| Stable
+            Grafana -.->|"Queries"| Prometheus
         end
 
-        %% GitOps Workflow
-        subgraph Ops[GitOps Control Plane]
-            ArgoCD[ArgoCD Controller]
+        subgraph GitOps["GitOps Control Plane"]
+            ArgoCD["ArgoCD"]
+            ImgUpdater["Image Updater"]
         end
 
-        Actions -->|1. Build & Push Image| ECR
-        Actions -->|2. Update Helm Values| GH
-        ArgoCD -.->|Watches for Changes| GH
-        ArgoCD ===>|Syncs State| EKS
-        ECR -.->|Pulls latest image| Pod
+        Build -->|Push Image| ECR
+        ImgUpdater -.->|"Polls ECR"| ECR
+        ImgUpdater ==>|"Updates Tag"| ArgoCD
+        ArgoCD -.->|"Watches Git"| GH
+        ArgoCD ==>|"Syncs"| EKS
     end
 
-    Client ===>|POST /predict| ALB
+    Client ==>|"POST /predict"| NGINX
 ```
 
 ### Components
@@ -124,10 +127,12 @@ Real-time telemetry includes tail latency tracking (p95/p99) and resource consum
 
 - **Model**: YOLO11L (Ultralytics)
 - **Runtime**: ONNX Runtime (INT8 Quantized)
-- **Backend**: FastAPI (Python)
+- **Backend**: FastAPI 0.115+ (Python)
 - **Frontend**: Vanilla JavaScript / HTML5 / Canvas
-- **Cloud**: AWS EKS, ELB, ECR
-- **DevOps**: Helm, ArgoCD, GitHub Actions
+- **Cloud**: AWS EKS, ECR
+- **Networking**: NGINX Ingress Controller (L7 traffic routing)
+- **DevOps**: Helm, ArgoCD, Argo Rollouts, ArgoCD Image Updater, GitHub Actions
+- **Security**: Trivy (container scanning), pip-audit (dependency scanning)
 - **Observability**: Prometheus, Grafana
 
 ## ⚡ Setup & Deployment
@@ -141,11 +146,12 @@ The **Live Interactive UI** is served at [http://a3033d45162184da488eb645414d2ff
 
 ### AWS Deployment & CI/CD
 
-The project is configured for **Continuous Deployment (CD)** via GitHub Actions. Any push to `main` automatically triggers:
-1.  **Quality Check**: Automated linting (`ruff`) and testing (`pytest`).
-2.  **Container Build**: Optimized Docker image creation (`Dockerfile.aws`).
-3.  **ECR Push**: Automatic upload to the Amazon ECR registry.
-4.  **EKS Rollout**: Seamless rolling update to the Kubernetes cluster.
+The project uses a **fully automated, secure CI/CD pipeline**. Any push to `main` triggers:
+1.  **Quality Gate**: Linting (`ruff`), testing (`pytest`), and dependency audit (`pip-audit`).
+2.  **Container Build**: Docker image with GHA layer caching.
+3.  **Security Scan**: Trivy scans for High/Critical CVEs before push.
+4.  **ECR Push**: Verified image uploaded to Amazon ECR.
+5.  **Auto-Deploy**: ArgoCD Image Updater detects the new tag and triggers a **Canary Rollout** through Argo Rollouts.
 
 ### 📉 Cost Optimization & Deployment Strategy
 
@@ -156,13 +162,14 @@ To maintain a production-grade infrastructure on a budget, this project implemen
 -   **Resource "Bin-Packing"**: CPU requests are right-sized to `200m` based on real-world telemetry (~6% CPU usage), allowing for dense pod packing on smaller nodes.
 -   **Blue/Green Node Migration**: The infrastructure is designed for "hot" migration. New node groups can be provisioned and old ones drained without any impact on the production LoadBalancer URLs.
 
-### ☁️ DevOps Transformation (GitOps)
+### ☁️ GitOps & Progressive Delivery
 
-The project has migrated from imperative "ClickOps" to a declarative **GitOps** model:
+The project implements a mature **GitOps** model with **progressive delivery**:
 
-1.  **Helm Packaging**: The entire application (Deployment, Service, HPA, ConfigMap) is defined as a reusable [Helm Chart](./charts/shelfwatch).
-2.  **ArgoCD Synchronization**: An in-cluster ArgoCD controller monitors the GitHub repository.
-3.  **Automated Rollouts**: When a new image is pushed to ECR, the CI pipeline updates `values.yaml`, and ArgoCD automatically syncs the cluster state, ensuring zero drift.
+1.  **Helm Packaging**: The entire application (Rollout, Service, Ingress, HPA, ConfigMap) is defined as a reusable [Helm Chart](./charts/shelfwatch).
+2.  **ArgoCD + Image Updater**: An in-cluster ArgoCD controller monitors GitHub. The Image Updater polls ECR for new tags — **no CI-to-Git commits needed**.
+3.  **NGINX Ingress**: Layer 7 traffic routing with weighted canary splitting (even with 1 node).
+4.  **Canary Deployments**: Argo Rollouts progressively shifts traffic (20% → 50% → 100%) with an automated **inference smoke test** between steps. Failed tests trigger automatic rollback.
 
 ![ArgoCD Dashboard](./images/ArgoCD.png)
 
@@ -176,10 +183,11 @@ To provision the infrastructure for the first time or perform a manual deploymen
 
 ```
 ShelfWatch/
+├── charts/             # Helm chart (Rollout, Ingress, Services, HPA)
 ├── docs/               # Technical specifications and diagrams
 ├── images/             # Documentation assets
 ├── inference/          # API layer and model runner
-├── infra/              # Kubernetes and AWS manifests
+├── infra/              # Kubernetes, AWS, and ArgoCD manifests
 ├── scripts/            # Management and export utilities
 ├── tests/              # Functional and unit verification
 └── ui/                 # Static frontend code
@@ -187,4 +195,3 @@ ShelfWatch/
 
 ## 📜 License
 MIT License.
-
