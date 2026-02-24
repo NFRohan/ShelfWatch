@@ -12,19 +12,14 @@ Write-Host "   - EKS cluster: $CLUSTER_NAME"
 Write-Host "   - ECR repository: $ECR_REPO_NAME"
 Write-Host "   - All associated resources (nodes, load balancers, etc)`n"
 
-$confirm = Read-Host "Are you sure? (y/N)"
-if ($confirm -ne "y" -and $confirm -ne "Y") {
-    Write-Host "Cancelled."
-    exit
-}
-
 # Delete K8s services first (releases Load Balancer)
 Write-Host "`nDeleting K8s services..." -ForegroundColor Yellow
 try {
     kubectl delete svc shelfwatch-inference 2>$null
     kubectl delete svc shelfwatch-grafana 2>$null
     kubectl delete svc shelfwatch-prometheus 2>$null
-    Start-Sleep -Seconds 10
+    kubectl delete svc -n ingress-nginx ingress-nginx-controller 2>$null
+    Start-Sleep -Seconds 15 # Give AWS time to release the ELB
 }
 catch {}
 
